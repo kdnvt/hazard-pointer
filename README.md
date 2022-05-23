@@ -1,5 +1,15 @@
 # hazard-pointer
 
+## Introduction
+This program is a hazard pointers implementation based on:
+
+< [Lock-Free Data Structures with Hazard Pointers](https://erdani.org/publications/cuj-2004-12.pdf) >
+
+While the concept is coming from the paper, the actually implementation may differ.
+
+## Warning
+The correctness of this program hasn't been verified rigorously.
+
 ## Tutorial
 
 #### `hp_pr_t *hp_pr_init();`
