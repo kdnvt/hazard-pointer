@@ -107,7 +107,7 @@ static inline hp_addr_t pptr_eq_val(hp_pr_t *pr,
 void hp_pr_release(hp_pr_t *pr, hp_addr_t ptr_addr)
 {
     void **pptr = (void **) ptr_addr;
-    if (!(*pptr))  // ptr_addr points to zero_ptr
+    if (!(atomic_load(pptr)))  // ptr_addr points to zero_ptr
         return;
     atomic_store(pptr, NULL);
     atomic_fetch_sub(&pr->size, 1);

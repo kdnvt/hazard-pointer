@@ -14,7 +14,7 @@ void *reader(void *arg)
     hp_pr_t *pr = argv[0];
     for (int i = 0; i < TIMES; i++) {
         hp_addr_t ptr_addr = hp_pr_load(pr, &data);
-        int *ptr = *ptr_addr;
+        int *ptr = atomic_load(ptr_addr);
         // do something
         printf("%d\n", *ptr);
         hp_pr_release(pr, ptr_addr);
