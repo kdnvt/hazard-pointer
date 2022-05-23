@@ -11,12 +11,13 @@ int *data;
 void *reader(void *arg)
 {
     void **argv = (void **) arg;
-    hp_protect_t *pr = argv[0];
+    hp_pr_t *pr = argv[0];
     for (int i = 0; i < TIMES; i++) {
-        int *ptr = hp_protect_load(pr, &data);
+        hp_addr_t ptr_addr = hp_pr_load(pr, &data);
+        int *ptr = *ptr_addr;
         // do something
         printf("%d\n", *ptr);
-        hp_protect_release(pr, ptr);
+        hp_pr_release(pr, ptr_addr);
     }
 }
 
@@ -29,7 +30,7 @@ void printf_free(void *ptr)
 void *writer(void *arg)
 {
     void **argv = (void **) arg;
-    hp_protect_t *pr = argv[0];
+    hp_pr_t *pr = argv[0];
     int id = (long) argv[1];
     hp_t *hp = hp_init(pr, printf_free);
     for (int i = 0; i < TIMES; i++) {
@@ -48,7 +49,7 @@ void *writer(void *arg)
 
 int main()
 {
-    hp_protect_t *pr = hp_protect_init();
+    hp_pr_t *pr = hp_pr_init();
 
     void *argv[NUM_THREAD][2];
 
