@@ -22,7 +22,7 @@ void *reader(void *arg)
 
 void printf_free(void *ptr)
 {
-    printf("free %p\n", (int *) ptr);
+    printf("free %d\n", *(int *) ptr);
     free(ptr);
 }
 
