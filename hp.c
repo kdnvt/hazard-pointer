@@ -157,11 +157,6 @@ int hp_pr_size(hp_pr_t *pr)
     return pr->size;
 }
 
-int hp_pr_list_size(hp_pr_t *pr)
-{
-    return pr->list_size;
-}
-
 void hp_pr_destroy(hp_pr_t *pr)
 {
     hp_node_t *tmp;
