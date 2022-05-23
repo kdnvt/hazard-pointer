@@ -1,12 +1,12 @@
 #include "hp.h"
 struct _hp_node {
-    void **ptr;
+    void *ptr;
     struct _hp_node *next;
     int used;
 };
 
 struct _hp_node_rt {
-    void **ptr;
+    void *ptr;
     struct _hp_node_rt *next;
 };
 
