@@ -26,7 +26,8 @@ struct _hp {
 static inline hp_addr_t pptr_eq_val(hp_pr_t *pr,
                                     hp_node_t *cur,
                                     void *val,
-                                    void **pptr);
+                                    void **pptr,
+                                    uintptr_t mask);
 
 hp_pr_t *hp_pr_init()
 {
@@ -50,9 +51,14 @@ hp_t *hp_init(hp_pr_t *pr, void (*dealloc)(void *))
 
 hp_addr_t hp_pr_load(hp_pr_t *pr, void *ptr)
 {
-    void **pptr = (void **) ptr;
+    return hp_pr_load_mask(pr, ptr, 0);
+}
+
+hp_addr_t hp_pr_load_mask(hp_pr_t *pr, void *ptr, uintptr_t mask)
+{
+    void **pptr = (void **) ((uintptr_t) ptr);
     void *val;
-    if (!(val = atomic_load(pptr)))
+    if (!(val = (void *) ((uintptr_t) atomic_load(pptr) & ~mask)))
         return (hp_addr_t)(&pr->zero_ptr);
     hp_node_t *cur;
     // try to reuse empty node
@@ -60,19 +66,19 @@ hp_addr_t hp_pr_load(hp_pr_t *pr, void *ptr)
         if (atomic_load(&cur->ptr))
             continue;
 
-        if (!(val = atomic_load(pptr)))
+        if (!(val = (void *) ((uintptr_t) atomic_load(pptr) & ~mask)))
             return (hp_addr_t)(&pr->zero_ptr);
 
         void *exp = NULL;
         if (!atomic_compare_exchange_strong(&cur->ptr, &exp, val))
             continue;
-        return pptr_eq_val(pr, cur, val, pptr);
+        return pptr_eq_val(pr, cur, val, pptr, mask);
     }
     // add new node
 
     cur = malloc(sizeof(*cur));
     atomic_store(&cur->ptr, NULL);
-    if (!(val = atomic_load(pptr)))
+    if (!(val = (void *) ((uintptr_t) atomic_load(pptr) & ~mask)))
         return (hp_addr_t)(&pr->zero_ptr);
     atomic_store(&cur->ptr, val);
     while (1) {
@@ -83,7 +89,7 @@ hp_addr_t hp_pr_load(hp_pr_t *pr, void *ptr)
             break;
         }
     }
-    return pptr_eq_val(pr, cur, val, pptr);
+    return pptr_eq_val(pr, cur, val, pptr, mask);
 }
 
 // Check whether *pptr is changed before storing it to hazard pointers.
@@ -91,14 +97,15 @@ hp_addr_t hp_pr_load(hp_pr_t *pr, void *ptr)
 static inline hp_addr_t pptr_eq_val(hp_pr_t *pr,
                                     hp_node_t *cur,
                                     void *val,
-                                    void **pptr)
+                                    void **pptr,
+                                    uintptr_t mask)
 {
     while (1) {
-        if (val == atomic_load(pptr)) {
+        if (val == (void *) ((uintptr_t) atomic_load(pptr) & ~mask)) {
             atomic_fetch_add(&pr->size, 1);
             return (hp_addr_t)(&cur->ptr);
         }
-        if (!(val = atomic_load(pptr)))
+        if (!(val = (void *) ((uintptr_t) atomic_load(pptr) & ~mask)))
             return (hp_addr_t)(&pr->zero_ptr);
         atomic_store(&cur->ptr, val);
     }
