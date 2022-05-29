@@ -111,6 +111,11 @@ static inline hp_addr_t pptr_eq_val(hp_pr_t *pr,
     }
 }
 
+hp_pr_t *hp_get_pr(hp_t *hp)
+{
+    return hp->pr;
+}
+
 void hp_pr_release(hp_pr_t *pr, hp_addr_t ptr_addr)
 {
     void **pptr = (void **) ptr_addr;
@@ -126,6 +131,7 @@ void hp_retired(hp_t *hp, void *ptr)
     tmp->next = hp->retired;
     hp->retired = tmp;
     tmp->ptr = ptr;
+    hp->retired_size++;
 
     int threshold = atomic_load(&hp->pr->size);
     threshold += (unsigned) threshold >> 2;
@@ -153,6 +159,7 @@ int hp_scan(hp_t *hp)
             hp_node_t *tmp = *cur_rt;
             *cur_rt = (*cur_rt)->next;
             free(tmp);
+            hp->retired_size--;
         } else
             cur_rt = &(*cur_rt)->next;
     }
@@ -167,11 +174,15 @@ int hp_pr_size(hp_pr_t *pr)
 void hp_pr_destroy(hp_pr_t *pr)
 {
     hp_node_t *tmp;
-    int count = 0;
     while (pr->head) {
         tmp = pr->head;
         pr->head = tmp->next;
         free(tmp);
     }
     free(pr);
+}
+
+int get_retired_size(hp_t *hp)
+{
+    return hp->retired_size;
 }
